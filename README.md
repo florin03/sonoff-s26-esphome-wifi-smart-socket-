@@ -15,5 +15,6 @@ We don't take any responsibility nor liability for using this software nor for t
 given by any member of this site or any related site.
 
 Note
+
 Please do not ask to add new devices unless it requires additional code for new features. 
 If the device is not listed as a module, try using Templates first. If it is not listed in the Tasmota Device Templates Repository create your own Template.
