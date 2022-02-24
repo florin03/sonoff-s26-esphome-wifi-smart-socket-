@@ -1,6 +1,7 @@
 # sonoff-s26-esphome-wifi-smart-socket-
 sonoff s26 esphome wifi smart socket cand be integrated with home assistant
 
+Alternative firmware for ESP8266 and ESP32 based devices with easy configuration using webUI, OTA updates, automation using timers or rules, expandability and entirely local control over MQTT, HTTP, Serial or KNX. Written for PlatformIO with limited support for Arduino IDE.
 
 Disclaimer
 
@@ -18,3 +19,7 @@ Note
 
 Please do not ask to add new devices unless it requires additional code for new features. 
 If the device is not listed as a module, try using Templates first. If it is not listed in the ESPHome Device Repository create your own Template.
+
+
+Quick Install
+Download one of the released above .bin file and flash it to your hardware using esphomeflasher, (see atached images).
