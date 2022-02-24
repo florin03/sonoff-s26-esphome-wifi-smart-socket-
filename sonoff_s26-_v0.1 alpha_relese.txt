@@ -1,0 +1,184 @@
+substitutions:
+#  name: sonoff_s26_smart_plug
+  sonoff_s26_plug_name: sonoff_s26_plug
+  power_button_pin_no: GPIO0
+  blue_led_pin_no: GPIO13
+  red_led_pin_no: GPIO05
+  relay_pin_no: GPIO12
+  rx_pin_no: GPIO01
+  tx_pin_no: GPIO03
+  sonoff_s26_plug_sensor_pin_no: GPIO02
+
+esphome:
+  name: sonoff-s26
+  project:
+    name: "my.sonoff_s26_smart_plug"
+    version: "1.0.0"
+  on_boot:
+    then:
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - logger.log: WIFI is connected!
+
+esp8266:
+  board: sonoff_s20
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+# change ota password here
+ota:
+  password: "my_ota_password"
+
+# change wifi password here
+wifi:
+  ssid: "my_wifi_name"
+  password: "my_wifi_password"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  #change ap password here
+  ap:
+    ssid: "Sonoff-S26 Fallback Hotspot"
+    password: "my_ap_password"
+
+captive_portal:
+
+# Adjusting flash writes time atm is every 30min
+preferences:
+  flash_write_interval: 30min
+
+web_server:
+  port: 80
+# change web server user and password here
+# acces web server from adress: my_ip:80 or http://sonoff-s26.local/
+  auth:
+    username: admin
+    password: "my_web_server_password"
+  
+# TIME FROM SNTP
+time:
+  - platform: sntp
+    id: times
+## time conditions https://esphome.io/components/time.html?highlight=clock#base-time-config
+## on time condition supported formats https://crontab.guru/
+# enable this for auto relay toggle on/off at set time or interval....
+#    on_time:
+#      - seconds: 0
+#        minutes: 0
+#        hours: 23
+#        days_of_week: SUN-SAT
+#        then:
+#          - switch.toggle: relay
+#      - seconds: 0
+#        minutes: 35
+#        hours: 08
+#        days_of_week: SUN-SAT
+#        then:
+#          - switch.toggle: relay
+      # Every 1 minutes
+#      - seconds: 0
+#        minutes: /60
+#        then:
+#          - switch.toggle: relay
+    servers: 0.pool.ntp.org 
+#             1.pool.ntp.org
+#             2.pool.ntp.org
+#    timezone: EET-2EEST
+# time zones format https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+
+light:
+# WIFI_Status_LED the leads comes on when wifi connected.
+  - platform: monochromatic
+    name: "WIFI_Status_LED"
+    output: blue_led
+
+# Register the blue LED as a dimmable output ....
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: $blue_led_pin_no
+    inverted: true
+    min_power: 0.00
+    max_power: 1.00
+
+# Register the blue LED as a output ....
+interval:
+  - interval: 5s
+    then:
+      if:
+        condition:
+          wifi.connected:
+        then:
+          - output.turn_on: blue_led
+        else:
+          - output.turn_off: blue_led
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: $power_button_pin_no
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "${sonoff_s26_plug_name} Power Button"
+    id: power_button
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at least 0.2s
+      then:
+        #- switch.toggle: relay / not implemented atm
+        - logger.log: "Double Clicked"
+    - timing:
+        - ON for 1s to 2s
+        - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Long Clicked"
+        #- logger.log: "Single Long Clicked"  / not implemented atm
+    - timing:
+        - ON for at most 1s
+        - OFF for at least 0.5s
+      then:
+        - switch.toggle: relay
+        #- logger.log: "Single Short Clicked" button single short press turns on relay
+      
+  - platform: status
+    name: "Sonoff S26 Status"
+    
+  - platform: gpio
+    pin: $sonoff_s26_plug_sensor_pin_no
+    name: "Sonoff S26 Sensor"
+
+switch:
+  - platform: gpio
+    id: red_led
+    pin:
+      number: $red_led_pin_no
+      inverted: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: gpio
+    name: "${sonoff_s26_plug_name}"
+    pin: $relay_pin_no
+    id: relay
+    restore_mode: RESTORE_DEFAULT_OFF
+  
+  - platform: restart
+    name: "Sonoff S26 Restart"
+
+    # Turn off red LED to show blue when turned on
+    on_turn_on:
+      - switch.turn_off: red_led
+
+    # Turns on the red LED once the plug is turned off. Stock plug doesn't do this, to restore normal behavior remove the on_turn_on and on_turn_off
+    # blocks.
+    on_turn_off:
+      - switch.turn_on: red_led
