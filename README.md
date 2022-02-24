@@ -22,4 +22,5 @@ If the device is not listed as a module, try using Templates first. If it is not
 
 
 Quick Install
+
 Download one of the released above .bin file and flash it to your hardware using esphomeflasher, (see atached images).
